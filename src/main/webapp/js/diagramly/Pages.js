@@ -484,8 +484,11 @@ EditorUi.prototype.getImageForPage = function(page, sourcePage, sourceGraph)
 
 	var temp = Graph.foreignObjectWarningText;
 	Graph.foreignObjectWarningText = '';
-	var svgRoot = graph.getSvg(null, null, null, null, null,
-		null, null, null, null, null, null, true);
+	var theme = (Editor.cssDarkMode || Editor.isDarkMode()) ?
+		'dark' : 'light';
+	var svgRoot = graph.getSvg(null, null, null, null, null, null,
+		null, null, null, null, null, theme, null, null, true);
+	
 	var bounds = graph.getGraphBounds();
 	document.body.removeChild(graph.container);
 	Graph.foreignObjectWarningText = temp;
@@ -555,7 +558,7 @@ EditorUi.prototype.initPages = function()
 			for (var i = 0; i < changes.length; i++)
 			{
 				if (changes[i] instanceof RenamePage ||
-					changes[i] instanceof MovePage ||
+					changes[i] instanceof ChangePage ||
 					changes[i] instanceof mxRootChange)
 				{
 					this.updateTabContainer();

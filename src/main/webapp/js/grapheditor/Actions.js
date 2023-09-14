@@ -307,6 +307,16 @@ Actions.prototype.init = function()
 		}
 	});
 	
+	this.addAction('swap', function()
+	{
+		var cells = graph.getSelectionCells();
+
+		if (cells.length == 2)
+		{
+			graph.swapShapes(cells[0], cells[1]);
+		}
+	});
+
 	this.addAction('copySize', function()
 	{
 		var cell = graph.getSelectionCell();
@@ -750,7 +760,7 @@ Actions.prototype.init = function()
 		{
 			var value = graph.getLinkForCell(cell) || '';
 			
-			ui.showLinkDialog(value, mxResources.get('apply'), function(link, docs, linkTarget)
+			ui.showLinkDialog(value, mxResources.get('ok'), function(link, docs, linkTarget)
 			{
 				link = mxUtils.trim(link);
     			graph.setLinkForCell(cell, (link.length > 0) ? link : null);
@@ -774,7 +784,7 @@ Actions.prototype.init = function()
 	{
 		if (graph.isEnabled() && !graph.isCellLocked(graph.getDefaultParent()))
 		{
-			ui.showLinkDialog('', mxResources.get('insert'), function(link, docs, linkTarget)
+			ui.showLinkDialog('', mxResources.get('ok'), function(link, docs, linkTarget)
 			{
 				link = mxUtils.trim(link);
 				
@@ -861,7 +871,7 @@ Actions.prototype.init = function()
 				
 				var selState = graph.cellEditor.saveSelection();
 				
-				ui.showLinkDialog(oldValue, mxResources.get('apply'), mxUtils.bind(this, function(value)
+				ui.showLinkDialog(oldValue, mxResources.get('ok'), mxUtils.bind(this, function(value)
 				{
 		    		graph.cellEditor.restoreSelection(selState);
 

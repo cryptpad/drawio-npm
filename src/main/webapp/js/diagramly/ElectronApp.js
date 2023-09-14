@@ -289,9 +289,9 @@ mxStencilRegistry.allowEval = false;
 
 	var graphCreateLinkForHint = Graph.prototype.createLinkForHint;
 	
-	Graph.prototype.createLinkForHint = function(href, label)
+	Graph.prototype.createLinkForHint = function(href, label, associatedCell)
 	{
-		var a = graphCreateLinkForHint.call(this, href, label);
+		var a = graphCreateLinkForHint.call(this, href, label, associatedCell);
 		
 		if (href != null && !this.isCustomLink(href))
 		{
@@ -1011,6 +1011,7 @@ mxStencilRegistry.allowEval = false;
 			{
 				var library = new DesktopLibrary(this, data, fileEntry);
 				this.loadLibrary(library);
+				this.showSidebar();
 			}
 			catch (e)
 			{
@@ -1164,6 +1165,7 @@ mxStencilRegistry.allowEval = false;
 						try
 						{
 							this.loadLibrary(new LocalLibrary(this, xml, name));
+							this.showSidebar();
 						}
 						catch (e)
 						{
@@ -1839,6 +1841,11 @@ mxStencilRegistry.allowEval = false;
 		electron.sendMessage('toggleStoreBkp');
 	}
 	
+	App.prototype.toggleGoogleFonts = function()
+	{
+		electron.sendMessage('toggleGoogleFonts');
+	}
+
 	App.prototype.openDevTools = function()
 	{
 		electron.sendMessage('openDevTools');
@@ -1992,8 +1999,8 @@ mxStencilRegistry.allowEval = false;
 				}
 				else 
 				{
-					editorUi.exportImage(s, false, true,
-						false, false, b, true, false, 'jpeg');
+					editorUi.exportImage(s, false, true, false,
+						false, b, true, false, 'jpeg');
 				}
 			}
 			else 
@@ -2123,6 +2130,7 @@ mxStencilRegistry.allowEval = false;
 		{
 			var library = new DesktopLibrary(this, data, fileEntry);
 			this.loadLibrary(library);
+			this.showSidebar();
 			success(library);
 		}), error, libPath);
 	};
