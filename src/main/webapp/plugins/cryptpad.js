@@ -4,10 +4,8 @@ Draw.loadPlugin(function(ui) {
 
 	// Adds action
 	ui.actions.addAction('cryptPadImport', async function() {
-		console.log('XXX cryptPadImport', ui);
 		const result = await window.parent.APP.addImage();
-		console.log('XXX result', result);
-		ui.importFile(result.url, 'image/png',10,10,8,8,'face.png');  // TODO mime type
+		ui.importFile(result.url, result.fileType,10,10,8,8, result.name);
 	});
 	
 	var menu = ui.menus.get('importFrom');
