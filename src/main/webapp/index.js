@@ -286,3 +286,16 @@ window.onerror = function() {
 		status.innerHTML = 'Page could not be loaded. Please try refreshing.';
 	}
 };
+
+if (urlParams['dev'] != '1' && typeof document.createElement('canvas').getContext === "function")
+{
+	window.addEventListener('load', function()
+	{
+		mxWinLoaded = true;
+		checkAllLoaded();
+	});
+}
+else
+{
+	App.main();
+}
