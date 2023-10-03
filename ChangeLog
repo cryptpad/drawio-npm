@@ -1,3 +1,129 @@
+12-SEP-2023: 21.7.5
+
+- Adds CSS styles for Latex SVG export [drawio-3839]
+- Removes invalid flow plugin UI entry [drawio-3840]
+- Fixes child edge bounding box offset [drawio-3844]
+- Fixes saving changes in Notion plugin [drawio-3846]
+- Shows shapes panel only after loading custom libs
+- [conf cloud] Improved error message for 413 HTTP error (file too large) [DID-9113]
+- Fixes contentLength header for UTF16 [drawio-3847]
+
+08-SEP-2023: 21.7.4
+
+- AWS shapes update to Q2 2023 [drawio-3677]
+
+08-SEP-2023: 21.7.3
+
+- Adds title attribute support for custom links
+- Adds Ctrl+Alt+X for copy as image [drawio-3754]
+- Changed app name in shortcuts edit link to draw.io
+- Uses pre-line for newlines in tooltips [DID-9327]
+- Adds WebP image export [drawio-553]
+- Enables text selection in lightbox [drawio-3732]
+- [conf cloud] Added support for custom templates in page IDs import [DID-9320]
+- [conf cloud] Showing actual filename in viewer title tooltip when displayName is different [DID-9241]
+- Handles possible JSON parsing error in DriveClient
+
+01-SEP-2023: 21.7.2
+
+- Fixes library item zoom on label select [DID-9295]
+- [conf cloud]] Added support for diagram names with spaces (untrimmed) [DID-9038]
+
+30-AUG-2023: 21.7.1
+
+- Refreshes after showing/hiding cells [drawio-9263]
+- Fixes moving multiple cells on touch devices
+- Fixes anchors and edge style for sequence diagrams [drawio-desktop-1370]
+- Fixes replace shape for UML lifeline drop targets
+- Enables new save dialog
+
+28-AUG-2023: 21.7.0
+
+- Adds page names in viewer tooltips [drawio-3763]
+- Adds README for Crypto JS library [CSP-2255]
+- Fixes canvas state after redrawShape [drawio-3806]
+- Adds checkbox for current layer with multiple cells
+- Fixes connect/select in locked layer [drawio-3760]
+- Adds Alt+C/V for copy-/pasteStyle [drawio-3632]
+- Adds initial API for custom links on context cells
+- Fixes possible cropping, reduces link dialog width
+- Adds Embed button to convert image URL to data URI
+
+22-AUG-2023: 21.6.9
+
+- Shows sidebar when libraries are loaded [drawio-3744]
+- Fixes toggle shapes panel ignores current state
+- Uses center of shapes for swap action
+- Remembers include diagram state for SVG/PNG export
+- Fixes CSS for exported dark mode SVG [drawio-3768]
+- Fixes printing of background images in CSS dark mode
+
+10-AUG-2023: 21.6.8
+
+- Fixes possible background image error [DID-9099]
+
+07-AUG-2023: 21.6.7
+
+- Fixes offset after page selection [drawio-desktop-1411]
+
+28-JUL-2023: 21.6.6
+
+- Adds improve contrast, fixes CSS for old dark mode
+- [conf cloud] Added config option to generate SVG preview when a diagram is published (generateSVGs: true) [DID-8942]
+- [vsdx] Split EMF conversion into chunks to reduce the chance of timeout and reduce + retries on error
+
+20-JUL-2023: 21.6.5
+
+- Fixes mxIsElectron undefined error in editor.js
+
+20-JUL-2023: 21.6.4
+
+- Uses URL hashtag for embed in Notion [drawio-3376]
+- [conf cloud] Removes draw.io support menu item from Confluence help menu [DID-8934]
+- [desktop] Changes default dark mode to classic [drawio-desktop-1391]
+- Adds html tags check/filteration to i18n parser [CSP-2113]
+- [conf cloud] Fixes Go to Containing Page button in embed diagrams viewer [DID-8704]
+
+18-JUL-2023: 21.6.3
+
+- Shift+Alt+Drag moves selection cells [drawio-3726]
+- Fixes grouping of shapes with table [drawio-3725]
+- Updates DOMPurify from 3.0.3 to 3.0.5
+- Fixes update of page tabs after import [DID-8891]
+- [conf cloud] Load main file diagram if draft unchanged and old version in macro
+- Fixes Grid option in pdf export
+- [jira cloud] Added support for server zip format [DFJC-18]
+- [vsdx] Added support for rotated edge labels [DID-8697]
+- Fixes getBoundingBoxFromGeometry for nested groups
+- Fixes initial scrollbar for demo mode in simple UI
+- Removes voice plugin [CSP-2113]
+- Use Ctrl+Y and Ctrl+Shift+Z for redo [drawio-3733]
+- Sanitizes HTML markup in labels [CSP-2113]
+
+11-JUL-2023: 21.6.2
+
+- Fixes application icon background color
+- Adds swap for two selected vertices in Arrange tab
+- [conf cloud] Adds Gliffy non-mapped shapes to mass import report [DID-8704]
+- Fixes inverted background page colors [drawio-desktop-1375]
+- Hides explore for unconnected cells [drawio-3716]
+- Fixes move cells on fold in lightbox [DID-8763]
+- Fixes handling of UTF-8 in SVG images [drawio-506]
+
+05-JUL-2023: 21.6.1
+
+- Fixes special cases in replace shape [drawio-3686]
+- Enables new dark mode in production [drawio-3701]
+- [conf cloud]] Adds back dark theme [drawio-3698]
+- [jira cloud]] Adds back dark theme [drawio-3697]
+- [vsdx] Fixed edge labels [DID-8697]
+- Fixes blue guides remaining in view [drawio-3695]
+- Uses new dark mode in Notion extension [#3701]
+
+04-JUL-2023: 21.6.0
+
+- Release rejected
+
 28-JUN-2023: 21.5.2
 
 - Fixes text contrast in right sidebar [drawio-3691]

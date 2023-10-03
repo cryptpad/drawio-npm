@@ -204,7 +204,7 @@
 	/**
 	 * Specifies if web fonts are enabled.
 	 */
-	Editor.enableWebFonts = urlParams['safe-style-src'] != '1';
+	Editor.enableWebFonts = urlParams['safe-style-src'] != '1' && !window.mxIsElectron;
 
 	/**
 	 * Disables the shadow option in the format panel.
@@ -546,29 +546,6 @@
         }}
 	].concat(Editor.commonProperties);
 
-	/**
-	 * CSS for adaptive SVG dark mode.
-	 */
-	Editor.svgDarkModeCss = '@media (prefers-color-scheme: dark) {' +
-		':root {--light-color: #c9d1d9; --dark-color: #0d1117; }' +
-		'svg[style^="background-color:"] { background-color: var(--dark-color) !important; }' +
-		'g[filter="url(#dropShadow)"] { filter: none !important; }' +
-		'[stroke="rgb(0, 0, 0)"] { stroke: var(--light-color); }' +
-		'[stroke="rgb(255, 255, 255)"] { stroke: var(--dark-color); }' +
-		'[fill="rgb(0, 0, 0)"] { fill: var(--light-color); }' +
-		'[fill="rgb(255, 255, 255)"] { fill: var(--dark-color); }' +
-		'g[fill="rgb(0, 0, 0)"] text { fill: var(--light-color); }' +
-		'div[data-drawio-colors*="color: rgb(0, 0, 0)"]' +
-		'	div { color: var(--light-color) !important; }' +
-		'div[data-drawio-colors*="border-color: rgb(0, 0, 0)"]' +
-		'	{ border-color: var(--light-color) !important; }' +
-		'div[data-drawio-colors*="border-color: rgb(0, 0, 0)"]' +
-		'	div { border-color: var(--light-color) !important; }' +
-		'div[data-drawio-colors*="background-color: rgb(255, 255, 255)"]' +
-		'	{ background-color: var(--dark-color) !important; }' +
-		'div[data-drawio-colors*="background-color: rgb(255, 255, 255)"]' +
-		'	div { background-color: var(--dark-color) !important; }}';
-	
 	/**
 	 * Default value for the CSV import dialog.
 	 */
@@ -1892,6 +1869,11 @@
 				Editor.oneDriveInlinePicker = config.oneDriveInlinePicker;
 			}
 
+			if (config.enableCssDarkMode != null)
+			{
+				Editor.enableCssDarkMode = config.enableCssDarkMode;
+			}
+
 			if (config.darkColor != null)
 			{
 				Editor.darkColor = config.darkColor;
@@ -2256,7 +2238,7 @@
 		{description: 'diagramSvgDesc', extension: 'svg', mimeType: 'image/svg'},
 		{description: 'diagramHtmlDesc', extension: 'html', mimeType: 'text/html'}];
 	
-	if (urlParams['save-dialog'] != '1')
+	if (urlParams['save-dialog'] == '0')
 	{
 		Editor.prototype.diagramFileTypes.push({description: 'diagramXmlDesc', extension: 'xml', mimeType: 'text/xml'});
 	}
@@ -2809,7 +2791,7 @@
 	/**
 	 * 
 	 */
-	Editor.prototype.convertImageToDataUri = function(url, callback)
+	Editor.prototype.convertImageToDataUri = function(url, callback, error)
 	{
 		try
 		{
@@ -2880,7 +2862,14 @@
 					
 					if (acceptResponse)
 					{
-						callback(Editor.svgBrokenImage.src);
+						if (error != null)
+						{
+							error();
+						}
+						else
+						{
+							callback(Editor.svgBrokenImage.src);
+						}
 					}
 			    };
 			    
@@ -2889,7 +2878,14 @@
 		}
 		catch (e)
 		{
-			callback(Editor.svgBrokenImage.src);
+			if (error != null)
+			{
+				error();
+			}
+			else
+			{
+				callback(Editor.svgBrokenImage.src);
+			}
 		}
 	};
 	
@@ -3548,7 +3544,7 @@
 	 */
 	Editor.prototype.exportToCanvas = function(callback, width, imageCache, background, error, limitHeight,
 		ignoreSelection, scale, transparentBackground, addShadow, converter, graph, border, noCrop, grid,
-		keepTheme, exportType, cells)
+		theme, exportType, cells)
 	{
 		try
 		{
@@ -3572,11 +3568,11 @@
 			// Handles special case where background is null but transparent is false
 			if (bg == null && transparentBackground == false)
 			{
-				bg = (keepTheme) ? this.graph.defaultPageBackgroundColor : '#ffffff';
+				bg = (theme == 'dark') ? Editor.darkColor : '#ffffff';
 			}
-			
+
 			this.convertImages(graph.getSvg(null, null, border, noCrop, null, ignoreSelection,
-				null, null, null, addShadow, null, keepTheme, exportType, cells),
+				null, null, null, addShadow, null, theme, exportType, cells),
 				mxUtils.bind(this, function(svgRoot)
 			{
 				try
@@ -4699,10 +4695,12 @@
 			{
 				this.addActions(div, ['pasteStyle', 'pasteData']);
 			}
+
+			styleFormatPanelAddStyleOps.apply(this, arguments);
 			
-			return styleFormatPanelAddStyleOps.apply(this, arguments);
+			return div;
 		};
-		
+
 		/**
 		 * Initial collapsed state of the properties panel.
 		 */
@@ -6535,30 +6533,70 @@
 	};
 
 	/**
+	 * Returns true if the given string contains an mxfile.
+	 */
+	Graph.prototype.adaptBackgroundPage = function(image, theme)
+	{
+		if (image != null && image.src != null && Graph.isPageLink(image.originalSrc))
+		{
+			try
+			{
+				var svg = Graph.getSvgFromDataUri(image.src);
+
+				if (svg != null)
+				{
+					var doc = new DOMParser().parseFromString(svg, 'text/xml');
+
+					// Removes dark theme CSS
+					var styles = doc.getElementsByTagName('style');
+					var css = mxUtils.htmlEntities(Graph.createSvgDarkModeCss(), false);
+
+					for (var i = 0; i < styles.length; i++)
+					{
+						if (styles[i].innerHTML == css)
+						{
+							styles[i].parentNode.removeChild(styles[i]);
+							
+							break;
+						}
+					}
+
+					// Adds new dark theme CSS
+					if (theme == 'dark' || theme == 'auto')
+					{
+						var style = Graph.createSvgDarkModeStyle(doc, theme);
+						doc.getElementsByTagName('defs')[0].appendChild(style);
+					}
+
+					image = new mxImage(Editor.createSvgDataUri(mxUtils.getXml(
+						doc.documentElement)), image.width, image.height,
+						image.x, image.y)
+				}
+			}
+			catch (e)
+			{
+				// ignore
+			}
+		}
+
+		return image;
+	};
+
+	/**
 	 * Temporarily overrides stylesheet during image export in dark mode.
 	 */
 	var graphGetSvg = Graph.prototype.getSvg;
 	
 	Graph.prototype.getSvg = function(background, scale, border, nocrop, crisp,
 		ignoreSelection, showText, imgExport, linkTarget, hasShadow,
-		incExtFonts, keepTheme, exportType, cells)
+		incExtFonts, theme, exportType, cells, noCssClass)
 	{
 		var temp = null;
 		var tempFg = null;
 		var tempBg = null;
 
-		if (false)
-		{
-			var svgDoc = result.ownerDocument;
-			var style = (svgDoc.createElementNS != null) ?
-		    	svgDoc.createElementNS(mxConstants.NS_SVG, 'style') : svgDoc.createElement('style');
-			svgDoc.setAttributeNS != null? style.setAttributeNS('type', 'text/css') :
-				style.setAttribute('type', 'text/css');
-			style.appendChild(svgDoc.createTextNode(Editor.svgDarkModeCss));
-			result.getElementsByTagName('defs')[0].appendChild(style);
-		}
-
-		if (!keepTheme && this.themes != null && this.defaultThemeName == 'darkTheme')
+		if (!Editor.enableCssDarkMode && this.themes != null && theme != null &&
+			((theme == 'dark') != (this.defaultThemeName == 'darkTheme')))
 		{
 			temp = this.stylesheet;
 			tempFg = this.shapeForegroundColor;
@@ -6570,8 +6608,31 @@
 			this.stylesheet = this.getDefaultStylesheet();
 			this.refresh();
 		}
-		
+
+		var bgImg = null;
+
+		// Adapts background page to given theme
+		if (Editor.enableCssDarkMode && this.backgroundImage != null)
+		{
+			bgImg = this.backgroundImage;
+			this.backgroundImage = this.adaptBackgroundPage(bgImg, theme);
+		}
+
 		var result = graphGetSvg.apply(this, arguments);
+
+		if (Editor.enableCssDarkMode && (theme == 'dark' || theme == 'auto'))
+		{
+			var cssClass = (noCssClass) ? null : 'ge-export-svg-' + theme;
+			
+			if (cssClass != null)
+			{
+				result.setAttribute('class', cssClass);
+			}
+
+			var style = Graph.createSvgDarkModeStyle(result.ownerDocument, theme, cssClass);
+			result.getElementsByTagName('defs')[0].appendChild(style);
+		}
+		
 		var extFonts = this.getCustomFonts();
 		
 		// Adds external fonts
@@ -6611,6 +6672,19 @@
 			document.body.appendChild(result);
 			Editor.MathJaxRender(result);
 			result.parentNode.removeChild(result);
+
+			// Copies MathJax CSS to output
+			var style = result.ownerDocument.getElementById('MJX-SVG-styles');
+
+			if (style != null)
+			{
+				result.getElementsByTagName('defs')[0].appendChild(style.cloneNode(true));
+			}
+		}
+
+		if (bgImg != null)
+		{
+			this.backgroundImage = bgImg;
 		}
 		
 		if (temp != null)
@@ -6815,7 +6889,7 @@
 	 * 
 	 * This toggles the visible state of the cells with ID 3 and 4.
 	 */
-	Graph.prototype.handleCustomLink = function(href)
+	Graph.prototype.handleCustomLink = function(href, cell)
 	{
 		if (href.substring(0, 17) == 'data:action/json,')
 		{
@@ -6823,7 +6897,7 @@
 
 			if (link.actions != null)
 			{
-				this.executeCustomActions(link.actions);
+				this.executeCustomActions(link.actions, null, cell);
 			}
 		}
 	};
@@ -6833,7 +6907,7 @@
 	 * When adding new actions that reference cell IDs support for updating
 	 * those cell IDs must be handled in Graph.updateCustomLinkActions
 	 */
-	Graph.prototype.executeCustomActions = function(actions, done)
+	Graph.prototype.executeCustomActions = function(actions, done, cell)
 	{
 		if (!this.executingCustomActions)
 		{
@@ -6888,7 +6962,7 @@
 
 						if (this.isCustomLink(action.open))
 						{
-							if (!this.customLinkClicked(action.open))
+							if (!this.customLinkClicked(action.open, cell))
 							{
 								return;
 							}
@@ -7018,6 +7092,11 @@
 					if (cells.length > 0)
 					{
 						this.scrollCellToVisible(cells[0]);
+					}
+					
+					if (cell != null && action.explore != null)
+					{
+						Graph.exploreFromCell(this, cell, action.explore);
 					}
 
 					if (action.tags != null)
@@ -8444,6 +8523,19 @@
 							}
 						}
 					};
+
+					// Adapts background images
+					if (Editor.enableCssDarkMode)
+					{
+						var printGetBackgroundImage = pv.getBackgroundImage;
+						
+						pv.getBackgroundImage = function()
+						{
+							return graph.adaptBackgroundPage(
+								printGetBackgroundImage.apply(
+									this, arguments));
+						};
+					}
 					
 					if (typeof(MathJax) !== 'undefined')
 					{

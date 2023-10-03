@@ -277,7 +277,7 @@ var StorageDialog = function(editorUi, fn, rowLimit)
 				p3.style.fontSize = '9pt';
 				p3.style.marginTop = '-14px';
 				p3.innerHTML = '<a style="background-color:#dcdcdc;padding:6px;color:black;text-decoration:none;" ' +
-					'href="https://desk.draw.io/a/solutions/articles/16000074659" target="_blank">' +
+					'href="https://www.drawio.com/doc/faq/google-drive-connection-problems" target="_blank">' +
 					'<img border="0" src="' + mxGraph.prototype.warningImage.src + '" align="absmiddle" ' +
 					'style="margin-top:-4px"> ' + mxResources.get('googleDriveMissingClickHere') + '</a>';
 				div.appendChild(p3);
@@ -4676,6 +4676,10 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 	var localServices = ['browser', 'device', 'download', '_blank'];
 	var dash = '&nbsp;&nbsp;&#8211&nbsp;&nbsp;';
 
+	var dashNode = document.createElement('option');
+	dashNode.setAttribute('disabled', 'disabled');
+	dashNode.innerHTML = '-----------------';
+
 	function addStorageEntry(mode, path, id, selected, title, entryType)
 	{
 		var option = null;
@@ -4723,16 +4727,19 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 
 						shortPath = path;
 
-						var idx = shortPath.lastIndexOf('/');
-
-						if (idx >= 0)
+						if (mode != App.MODE_GITHUB && mode == App.MODE_GITLAB)
 						{
-							shortPath = shortPath.substring(idx + 1);
+							var idx = shortPath.lastIndexOf('/');
+
+							if (idx >= 0)
+							{
+								shortPath = shortPath.substring(idx + 1);
+							}
 						}
 						
-						if (shortPath.length > 25)
+						if (shortPath.length > 40)
 						{
-							shortPath = shortPath.substring(0, 25) + '...';
+							shortPath = shortPath.substring(0, 20) + '...' + shortPath.substring(shortPath.length - 20);
 						}
 					}
 
@@ -4798,24 +4805,14 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 			if (entry != null)
 			{
 				resetOption.style.display = '';
-				editorUi.addRecent(entry, 'Folders');
+				editorUi.addRecent(entry, 'Folders', 5);
+
 				var option = addStorageEntry(entry.mode, entry.path, entry.id, true);
-
-				if (option.parentNode.firstChild != option)
-				{
-					option.parentNode.insertBefore(option,
-						option.parentNode.firstChild);
-				}
-
-				if (pickFolderOption != null)
-				{
-					pickFolderOption.parentNode.removeChild(pickFolderOption);
-					defaultValue = option.getAttribute('value');
-					storageSelect.value = defaultValue;
-					pickFolderOption = null;
-
-					storageChanged();
-				}
+				storageSelect.innerHTML = '';
+				pickFolderOption = null;
+				entries = {};
+				storageSelect.value = option.value;
+				addStorageEntries();
 			}
 		}, true, true, true, true);
 	};
@@ -4842,21 +4839,24 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 	function addStorageEntries()
 	{
 		var recent = editorUi.getRecent('Folders');
+		var recentCount = 0;
 
 		if (recent != null && recent.length > 0)
 		{
 			for (var i = 0; i < recent.length; i++)
 			{
-				addStorageEntry(recent[i].mode, recent[i].path, recent[i].id);
+				if (addStorageEntry(recent[i].mode, recent[i].path, recent[i].id) != null)
+				{
+					recentCount++;
+				}
 			}
 
-			resetOption.style.display = '';
+			if (recentCount > 0)
+			{
+				storageSelect.appendChild(dashNode.cloneNode(true));
+			}
 		}
-		else
-		{
-			resetOption.style.display = 'none';
-		}
-		
+
 		addStorageEntry(App.MODE_GOOGLE, mxResources.get('myDrive'),
 			'root', null, null, 'root');
 		addStorageEntry(App.MODE_GOOGLE, null, null, null, null, 'pick');
@@ -4903,7 +4903,13 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 			addStorageEntry('_blank', null, null, null, mxResources.get('openInNewWindow'));
 		}
 
-		storageSelect.appendChild(resetOption);
+		if (recentCount > 0)
+		{
+			storageSelect.appendChild(dashNode.cloneNode(true));
+			var prev = storageSelect.value;
+			storageSelect.appendChild(resetOption);
+			storageSelect.value = prev;
+		}
 
 		// Avoids folder picker on initial state
 		if (storageSelect.value.substring(0, 11) == 'pickFolder-' ||
@@ -4923,7 +4929,11 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 	{
 		SaveDialog.lastValue = storageSelect.value;
 		var entry = entries[SaveDialog.lastValue];
-		saveFn(saveAsInput, entry.mode, entry.id);
+
+		if (entry != null)
+		{
+			saveFn(saveAsInput, entry.mode, entry.id);
+		}
 	}, null, 'geBtn gePrimaryBtn');
 
 	function storageChanged()
@@ -4932,6 +4942,8 @@ var SaveDialog = function(editorUi, title, saveFn, disabledModes, data, mimeType
 		{
 			editorUi.resetRecent('Folders');
 			storageSelect.innerHTML = '';
+			storageSelect.value = '';
+			pickFolderOption = null;
 			entries = {};
 			addStorageEntries();
 		}
@@ -5943,15 +5955,15 @@ var PopupDialog = function(editorUi, url, pre, fallback, hideDialog)
 
 	var cropBtn = mxUtils.button(mxResources.get('crop'), function()
 	{
-	   var dlg = new CropImageDialog(editorUi, linkInput.value, clipPath, 
-		   function(clipPath_p, width, height)
-		   {
-			   clipPath = clipPath_p;
-			   cW = width;
-			   cH = height;
-		   });
+		var dlg = new CropImageDialog(editorUi, linkInput.value, clipPath, 
+				function(clipPath_p, width, height)
+			{
+				clipPath = clipPath_p;
+				cW = width;
+				cH = height;
+			});
 	   
-	   editorUi.showDialog(dlg.container, 300, 390, true, true);
+		editorUi.showDialog(dlg.container, 300, 390, true, true);
 	});
 	
 	if (withCrop)
@@ -5959,8 +5971,56 @@ var PopupDialog = function(editorUi, url, pre, fallback, hideDialog)
  		cropBtn.className = 'geBtn';
 		btns.appendChild(cropBtn);
 	}
+	
+	var embedBtn = mxUtils.button(mxResources.get('embed'), function()
+	{
+		if (linkInput.value.substring(0, 5) != 'data:' && editorUi.spinner.spin(
+			document.body, mxResources.get('loading')))
+		{
+			var converter = editorUi.editor.createImageUrlConverter();
+			var src = converter.convert(linkInput.value);
+			var img = new Image();
 
-	function updateCropButton()
+			img.onload = function()
+			{
+				editorUi.editor.convertImageToDataUri(src, function(uri)
+				{
+					editorUi.confirmImageResize(function(doResize)
+					{
+						editorUi.resizeImage(img, uri, mxUtils.bind(this, function(data2, w2, h2)
+						{
+							editorUi.spinner.stop();
+
+							// Refuses to insert images above a certain size as they kill the app
+							if (data2 != null && data2.length < editorUi.maxImageBytes)
+							{
+								linkInput.value = data2;
+								updateButtonStates();
+							}
+							else
+							{
+								editorUi.handleError({message: mxResources.get('imageTooBig')});
+							}
+						}), doResize, editorUi.maxImageSize);
+					}, img.width > editorUi.maxImageSize || img.height > editorUi.maxImageSize ||
+						uri.length > editorUi.maxImageBytes);
+				}, mxUtils.bind(this, function()
+				{
+					editorUi.handleError({message: mxResources.get('fileNotFound')});
+				}));
+			};
+
+			img.onerror = function()
+			{
+				editorUi.spinner.stop();
+				editorUi.handleError({message: mxResources.get('fileNotFound')});
+			};
+
+			img.src = src;
+		}
+	});
+
+	function updateButtonStates()
 	{
 		if (linkInput.value.length > 0)
 		{
@@ -5970,15 +6030,27 @@ var PopupDialog = function(editorUi, url, pre, fallback, hideDialog)
 		{
 			cropBtn.setAttribute('disabled', 'disabled');
 		}
+
+		if (linkInput.value.substring(0, 5) != 'data:')
+		{
+			embedBtn.removeAttribute('disabled');
+		}
+		else
+		{
+			embedBtn.setAttribute('disabled', 'disabled');
+		}
 	};
+
+	embedBtn.className = 'geBtn';
 
 	mxEvent.addListener(linkInput, 'change', function(e)
 	{
 		clipPath = null;
-		updateCropButton();
+		updateButtonStates();
 	});
 
-	updateCropButton();
+	updateButtonStates();
+	btns.appendChild(embedBtn);
 	
 	var applyBtn = mxUtils.button(mxResources.get('apply'), function()
 	{
@@ -6081,7 +6153,8 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 	pageRadio.setAttribute('name', 'geLinkDialogOption');
 
 	var pageSelect = document.createElement('select');
-	pageSelect.style.width = '520px';
+	pageSelect.style.maxWidth = '100%';
+	pageSelect.style.width = '380px';
 
 	var newWindowCheckbox = document.createElement('input');
 	newWindowCheckbox.setAttribute('type', 'checkbox');
@@ -6099,7 +6172,7 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 	
 	if (showNewWindowOption)
 	{
-		linkInput.style.width = '340px';
+		linkInput.style.width = '200px';
 	}
 	
 	if (showPages && editorUi.pages != null)
@@ -6278,19 +6351,28 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 	var btns = document.createElement('div');
 	btns.style.marginTop = '18px';
 	btns.style.textAlign = 'center';
-	
-	var helpBtn = mxUtils.button(mxResources.get('help'), function()
-	{
-		editorUi.openLink('https://www.drawio.com/doc/faq/custom-links');
-	});
 
-	helpBtn.style.verticalAlign = 'middle';
-	helpBtn.className = 'geBtn';
-	btns.appendChild(helpBtn);
-
-	if (editorUi.isOffline() && !mxClient.IS_CHROMEAPP)
+	if (!editorUi.isOffline())
 	{
-		helpBtn.style.display = 'none';
+		var link = document.createElement('a');
+		link.setAttribute('href', 'https://www.drawio.com/doc/faq/custom-links');
+		link.setAttribute('title', mxResources.get('help'));
+		link.setAttribute('target', '_blank');
+		link.style.marginLeft = '8px';
+		link.style.cursor = 'help';
+		
+		var icon = document.createElement('img');
+		mxUtils.setOpacity(icon, 50);
+		icon.style.height = '16px';
+		icon.style.width = '16px';
+		icon.setAttribute('border', '0');
+		icon.setAttribute('valign', 'middle');
+		icon.style.marginTop = (mxClient.IS_IE11) ? '0px' : '-4px';
+		icon.setAttribute('src', Editor.helpImage);
+		link.appendChild(icon);
+		icon.className = 'geAdaptiveAsset';
+		
+		btns.appendChild(link);
 	}
 	
 	var cancelBtn = mxUtils.button(mxResources.get('cancel'), function()
@@ -6335,25 +6417,31 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 		
 		linkInput.focus();
 	};
-	
-	function addButton(src, tooltip, fn)
+
+	var selectDropdown = document.createElement('select');
+	selectDropdown.className = 'geBtn';
+	selectDropdown.style.position = 'relative';
+	selectDropdown.style.top = '1px';
+	selectDropdown.style.maxWidth = '100px';
+	var selectFn = {};
+
+	var option = document.createElement('option');
+	mxUtils.write(option, mxResources.get('select') + '...');
+	option.value = '';
+	selectDropdown.appendChild(option);
+
+	function addButton(key, fn)
 	{
-		var btn = mxUtils.button('', fn);
-		btn.className = 'geBtn';
-		btn.setAttribute('title', tooltip);
-		var img = document.createElement('img');
-		img.style.height = '26px';
-		img.style.width = '26px';
-		img.setAttribute('src', src);
-		btn.style.minWidth = '42px';
-		btn.style.verticalAlign = 'middle';
-		btn.appendChild(img);
-		btns.appendChild(btn);
+		var option = document.createElement('option');
+		mxUtils.write(option, mxResources.get(key));
+		option.value = key;
+		selectDropdown.appendChild(option);
+		selectFn[key] = fn;
 	};
 
 	if (typeof(google) != 'undefined' && typeof(google.picker) != 'undefined' && editorUi.drive != null)
 	{
-		addButton(IMAGE_PATH + '/google-drive-logo.svg', mxResources.get('googlePlus'), function()
+		addButton('googleDrive', function()
 		{
 			if (editorUi.spinner.spin(document.body, mxResources.get('authorizing')))
 			{
@@ -6380,7 +6468,7 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 	
 	if (typeof(Dropbox) != 'undefined' && typeof(Dropbox.choose) != 'undefined')
 	{
-		addButton(IMAGE_PATH + '/dropbox-logo.svg', mxResources.get('dropbox'), function()
+		addButton('dropbox', function()
 		{
 			// Authentication will be carried out on open to make sure the
 			// autosave does not show an auth dialog. Showing it here will
@@ -6403,7 +6491,7 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 	
 	if (editorUi.oneDrive != null)
 	{
-		addButton(IMAGE_PATH + '/onedrive-logo.svg', mxResources.get('oneDrive'), function()
+		addButton('oneDrive', function()
 		{
 			editorUi.oneDrive.pickFile(function(id, files)
 			{
@@ -6418,7 +6506,7 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 	
 	if (editorUi.gitHub != null)
 	{
-		addButton(IMAGE_PATH + '/github-logo.svg', mxResources.get('github'), function()
+		addButton('github', function()
 		{
 			editorUi.gitHub.pickFile(function(path)
 			{
@@ -6440,7 +6528,7 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 	
 	if (editorUi.gitLab != null)
 	{
-		addButton(IMAGE_PATH + '/gitlab-logo.svg', mxResources.get('gitlab'), function()
+		addButton('gitlab', function()
 		{
 			editorUi.gitLab.pickFile(function(path)
 			{
@@ -6457,6 +6545,20 @@ var LinkDialog = function(editorUi, initialValue, btnLabel, fn, showPages, showN
 					linkInput.focus();
 				}
 			});
+		});
+	}
+
+	if (selectDropdown.children.length > 1)
+	{
+		btns.appendChild(selectDropdown);
+
+		mxEvent.addListener(selectDropdown, 'change', function(evt)
+		{
+			if (selectFn[selectDropdown.value] != null)
+			{
+				selectFn[selectDropdown.value]();
+				selectDropdown.value = '';
+			}
 		});
 	}
 
@@ -8581,6 +8683,55 @@ var FreehandWindow = function(editorUi, x, y, w, h, withBrush)
 /**
  * 
  */
+var DarkModeColorsWindow = function(editorUi, x, y, w, h)
+{
+	var graph = editorUi.editor.graph;
+
+	var div = document.createElement('div');
+	div.style.display = 'flex';
+	div.style.alignItems = 'center';
+	div.style.justifyContent = 'center';
+	div.style.textAlign = 'center';
+	div.style.userSelect = 'none';
+	div.style.overflow = 'hidden';
+	div.style.height = '100%';
+	div.style.paddingTop = '16px';
+
+	var btn = mxUtils.button('Convert Colors', mxUtils.bind(this, function()
+	{
+		editorUi.convertDarkModeColors((graph.isSelectionEmpty()) ?
+			graph.getVerticesAndEdges() : graph.getSelectionCells());
+		this.window.setVisible(false);
+	}));
+
+	btn.setAttribute('title', 'Convert Colors');
+	btn.className = 'geBtn gePrimaryBtn';
+	
+	div.appendChild(btn);
+
+	var help = editorUi.menus.createHelpLink('https://github.com/jgraph/drawio/discussions/3701');
+	help.style.position = 'relative';
+	help.style.marginLeft = '6px';
+	div.appendChild(help);
+
+	this.window = new mxWindow('Dark Mode Colors', div, x, y, w, h, true, true);
+	this.window.destroyOnClose = false;
+	this.window.setMinimizable(false);
+	this.window.setMaximizable(false);
+	this.window.setResizable(false);
+	this.window.setClosable(true);
+	
+	this.window.addListener('show', mxUtils.bind(this, function()
+	{
+		this.window.fit();
+	}));
+	
+	editorUi.installResizeHandler(this, false);
+};
+
+/**
+ * 
+ */
 var TagsWindow = function(editorUi, x, y, w, h)
 {
 	var graph = editorUi.editor.graph;
@@ -10493,6 +10644,11 @@ var LibraryDialog = function(editorUi, name, library, initialImages, file, mode,
 	
 					mxEvent.addListener(wrapper, 'dragstart', function(evt)
 					{
+						if (stopEditing != null)
+						{
+							return;
+						}
+
 						if (data == null && img != null)
 						{
 							rem.style.visibility = 'hidden';
@@ -12882,8 +13038,12 @@ var FontDialog = function(editorUi, curFontname, curUrl, curType, fn)
 	}
 	
 	row.appendChild(td);
-	tbody.appendChild(row);
-	
+
+	if (urlParams['isGoogleFontsEnabled'] != '0')
+	{
+		tbody.appendChild(row);
+	}
+
 	row = document.createElement('tr');
 	
 	td = document.createElement('td');
@@ -12909,7 +13069,11 @@ var FontDialog = function(editorUi, curFontname, curUrl, curType, fn)
 	td = document.createElement('td');
 	td.appendChild(googleFontInput);
 	row.appendChild(td);
-	tbody.appendChild(row);
+
+	if (urlParams['isGoogleFontsEnabled'] != '0')
+	{
+		tbody.appendChild(row);
+	}
 	
 	//Generic remote fonts section
 	row = document.createElement('tr');
