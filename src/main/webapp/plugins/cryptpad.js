@@ -19,8 +19,11 @@ Draw.loadPlugin(function(ui) {
 	// Adds action
 	ui.actions.addAction('cryptPadImport', async function() {
 		const result = await window.parent.APP.addImage();
-		const size = await getImageSize(result.url);
-		ui.importFile(result.url, result.fileType, 0, 0, size.width, size.height, result.name);
+
+		ui.importFiles([result.blob]);
+
+		// const size = await getImageSize(result.url);
+		// ui.importFile(result.url, result.fileType, 0, 0, size.width, size.height, result.name);
 	});
 	
 	var menu = ui.menus.get('importFrom');
