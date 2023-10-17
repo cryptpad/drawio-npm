@@ -1478,12 +1478,6 @@ var CreateGraphDialog = function(editorUi, title, type)
 		{
 			editorUi.confirm(mxResources.get('areYouSure'), function()
 			{
-				if (container.parentNode != null)
-				{
-					graph.destroy();
-					container.parentNode.removeChild(container);
-				}
-		
 				editorUi.hideDialog();
 			});
 		})
@@ -1507,15 +1501,13 @@ var CreateGraphDialog = function(editorUi, title, type)
 			cells = editorUi.editor.graph.importCells(cells, pt.x, pt.y);
 			var view = editorUi.editor.graph.view;
 			var temp = view.getBounds(cells);
-			temp.x -= view.translate.x;
-			temp.y -= view.translate.y;
-			editorUi.editor.graph.scrollRectToVisible(temp);
-			editorUi.editor.graph.setSelectionCells(cells);
-			
-			if (container.parentNode != null)
+
+			if (temp != null)
 			{
-				graph.destroy();
-				container.parentNode.removeChild(container);
+				temp.x -= view.translate.x;
+				temp.y -= view.translate.y;
+				editorUi.editor.graph.scrollRectToVisible(temp);
+				editorUi.editor.graph.setSelectionCells(cells);
 			}
 			
 			editorUi.hideDialog();
@@ -1528,6 +1520,8 @@ var CreateGraphDialog = function(editorUi, title, type)
 		{
 			div.appendChild(cancelBtn);
 		}
+
+		this.graph = graph;
 	};
 
 	this.container = div;
