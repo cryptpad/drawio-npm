@@ -1,33 +1,25 @@
 Draw.loadPlugin(function(ui) {
-
-	const getImageSize = function(url) {
-		return new Promise((resolve) => {
-			var img = document.createElement("img");
-			img.src = url;
-			img.onload = function() {
-				img.style.visibility = 'hidden';
-				document.body.appendChild(img);
-				resolve({width: img.clientWidth, height: img.clientHeight});
-				document.body.removeChild(img);
-			}
-		});
+	const isCryptPadIntegrated = function() {
+		const params = new URLSearchParams(document.location.search);
+		return params.get('integrated') == 'true';
 	}
 
 	// Adds resource for action
-	mxResources.parse('cryptPadImport=Import image from CryptPad...');
+	if (isCryptPadIntegrated()) {
+		mxResources.parse('cryptPadImport=Nextcloud...');
+	} else {
+		mxResources.parse('cryptPadImport=CryptPad...');
+	}
 
 	// Adds action
 	ui.actions.addAction('cryptPadImport', async function() {
 		const result = await window.parent.APP.addImage();
 
 		ui.importFiles([result.blob]);
-
-		// const size = await getImageSize(result.url);
-		// ui.importFile(result.url, result.fileType, 0, 0, size.width, size.height, result.name);
 	});
 	
-	var menu = ui.menus.get('importFrom');
-	var oldFunct = menu.funct;
+	const menu = ui.menus.get('importFrom');
+	const oldFunct = menu.funct;
 	
 	menu.funct = function(menu, parent) {
 		ui.menus.addMenuItems(menu, ['cryptPadImport'], parent);
