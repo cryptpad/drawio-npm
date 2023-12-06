@@ -109,6 +109,7 @@ Draw.loadPlugin(function(ui) {
 	const oldFunct = menu.funct;
 	
 	menu.funct = function(menu, parent) {
+		ui.menus.menus.exportAs.enabled = false;
 		ui.menus.addMenuItems(menu, ['cryptPadImport'], parent);
 		oldFunct.apply(this, arguments);
 	};
