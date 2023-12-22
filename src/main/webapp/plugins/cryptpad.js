@@ -11,7 +11,7 @@ Draw.loadPlugin(function(ui) {
 				document.body.removeChild(img);
 			}
 		});
-	}
+	};
 
 	class ImageCache {
 		constructor(handleGet) {
@@ -94,11 +94,21 @@ Draw.loadPlugin(function(ui) {
 	ui.actions.addAction('cryptPadImport', async function() {
 		const selected = await window.parent.APP.addImage();
 		if (typeof selected === "string") {
-			// This is a cryptpad: url send by a new version of CryptPad or Nextcloud
-			const imageData = await imageCache.load(selected);
-			const imageSize = await getImageSize(imageData.url);
+			if (selected.startsWith('cryptpad://')) {
+				// This is a cryptpad: url send by a new version of CryptPad
+				const imageData = await imageCache.load(selected);
+				const imageSize = await getImageSize(imageData.url);
 
-			ui.importFile(selected, imageData.type, 0, 0, imageSize.width, imageSize.height);
+				ui.importFile(selected, imageData.type, 0, 0, imageSize.width, imageSize.height);
+			} else {
+				// This is a url send by a new version of Nextcloud
+				const imageSize = await getImageSize(selected);
+
+				const graph = ui.editor.graph;
+				graph.insertVertex(null, null, '', 0, 0, imageSize.width, imageSize.height,
+					'shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;' +
+					'verticalAlign=top;aspect=fixed;imageAspect=0;image=' + selected + ';');
+			}
 		} else {
 			// This is a blob send by a old version of CryptPad or Nextcloud
 			ui.importFiles([selected]);
