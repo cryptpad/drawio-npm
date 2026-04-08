@@ -1,0 +1,8 @@
+{
+  "name": "drawio",
+  "version": "21.8.2+6",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cryptpad/drawio-npm"
+  }
+}
