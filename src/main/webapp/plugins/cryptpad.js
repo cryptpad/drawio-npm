@@ -157,6 +157,7 @@ Draw.loadPlugin(function (ui) {
 		}
 	});
 
+
 	const menu = ui.menus.get("importFrom");
 	const oldFunct = menu.funct;
 
@@ -164,6 +165,8 @@ Draw.loadPlugin(function (ui) {
 		ui.menus.addMenuItems(menu, ["cryptPadImport"], parent);
 		oldFunct.apply(this, arguments);
 	};
+
+	ui.actions.get("insertImage").funct = ui.actions.get("cryptPadImport").funct;
 
 	removeGenerateButton();
 	removeStatusContainer();
