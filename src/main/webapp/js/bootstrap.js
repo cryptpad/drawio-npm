@@ -242,6 +242,7 @@ function checkAllLoaded()
 {
     if (mxScriptsLoaded && mxWinLoaded)
     {
+        App.pluginRegistry.cryptpad = 'plugins/cryptpad.js';
         App.main();				
     }
 };
