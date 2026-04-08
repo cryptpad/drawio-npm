@@ -5,6 +5,12 @@ Draw.loadPlugin(function (ui) {
 		generateButton.remove();
 	}
 
+	const removeStatusContainer = function () {
+		const innerStatusContainer = document.querySelector('.geStatus');
+		const outerStatusContainer = innerStatusContainer?.parentElement;
+		outerStatusContainer.remove();
+	}
+
 	const getImageSize = function (url) {
 		return new Promise((resolve) => {
 			var img = document.createElement("img");
@@ -160,5 +166,6 @@ Draw.loadPlugin(function (ui) {
 	};
 
 	removeGenerateButton();
+	removeStatusContainer();
 	patchCanvasImage();
 });
