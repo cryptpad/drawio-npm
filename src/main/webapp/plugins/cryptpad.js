@@ -2,13 +2,18 @@ Draw.loadPlugin(function (ui) {
 
 	const removeGenerateButton = function () {
 		const generateButton = document.querySelector('[title="Generate"]');
-		generateButton.remove();
+		if (generateButton) {
+			generateButton.style.display = 'none';
+		}
 	}
 
 	const removeStatusContainer = function () {
 		const innerStatusContainer = document.querySelector('.geStatus');
 		const outerStatusContainer = innerStatusContainer?.parentElement;
-		outerStatusContainer.remove();
+		//Removes the "status" container only in sketch theme - makes sure toolbar in classic theme is not removed
+		if (outerStatusContainer.classList.contains('geToolbarContainer') && !outerStatusContainer.classList.contains('geSimpleMainMenu')) {
+			outerStatusContainer.style.display = 'none';
+		}
 	}
 
 	const getImageSize = function (url) {
@@ -171,4 +176,5 @@ Draw.loadPlugin(function (ui) {
 	removeGenerateButton();
 	removeStatusContainer();
 	patchCanvasImage();
+
 });
