@@ -7,6 +7,35 @@ Draw.loadPlugin(function (ui) {
 		}
 	}
 
+	const removeGitHubButton = function () {
+		const observer = new MutationObserver(() => {
+			const gitHubButton = document.querySelector('a[href="https://github.com/jgraph/drawio"]');
+			if (gitHubButton) {
+				gitHubButton.style.display = 'none';
+				observer.disconnect();
+			}
+		});
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true
+		});
+	}
+
+	const removeEditImage = function () {
+		const observer = new MutationObserver(() => {
+			const editImageItem = Array.from(document.querySelectorAll('.mxPopupMenuItem'))
+			.find(item => item.textContent.trim() === 'Edit Image...');
+			if (editImageItem) {
+				editImageItem.style.display = 'none';
+				observer.disconnect();
+			}
+		});
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true
+		});
+	}
+
 	const removeStatusContainer = function () {
 		const innerStatusContainer = document.querySelector('.geStatus');
 		const outerStatusContainer = innerStatusContainer?.parentElement;
@@ -174,7 +203,9 @@ Draw.loadPlugin(function (ui) {
 	ui.actions.get("insertImage").funct = ui.actions.get("cryptPadImport").funct;
 
 	removeGenerateButton();
+	removeGitHubButton();
 	removeStatusContainer();
+	removeEditImage();
 	patchCanvasImage();
 
 });
