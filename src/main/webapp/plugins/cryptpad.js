@@ -39,9 +39,11 @@ Draw.loadPlugin(function (ui) {
 	const removeStatusContainer = function () {
 		const innerStatusContainer = document.querySelector('.geStatus');
 		const outerStatusContainer = innerStatusContainer?.parentElement;
-		//Removes the "status" container only in sketch theme - makes sure toolbar in classic theme is not removed
-		if (outerStatusContainer.classList.contains('geToolbarContainer') && !outerStatusContainer.classList.contains('geSimpleMainMenu')) {
-			outerStatusContainer.style.display = 'none';
+		if (outerStatusContainer) {
+			//Removes the "status" container only in sketch theme - makes sure toolbar in classic theme is not removed
+			if (outerStatusContainer.classList.contains('geToolbarContainer') && !outerStatusContainer.classList.contains('geSimpleMainMenu')) {
+				outerStatusContainer.style.display = 'none';
+			}
 		}
 	}
 
