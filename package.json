@@ -1,6 +1,14 @@
 {
-  "name": "drawio",
-  "version": "29.6.7+3",
+  "name": "cryptpad-diagram",
+  "description": "CryptPad Diagram application",
+  "version": "0.2.0",
+  "license": "Apache-2.0",
+  "files": [
+    "LICENSE",
+    "VERSION",
+    "README.md",
+    "src/main/webapp"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cryptpad/drawio-npm"
